@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WebSocketSharp;
-
 namespace StreamExchangeRate
 {
     abstract class Provider

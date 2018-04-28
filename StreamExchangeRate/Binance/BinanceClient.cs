@@ -3,7 +3,6 @@ using System.Configuration;
 using Newtonsoft.Json;
 using WebSocketSharp;
 using System.Threading;
-
 namespace StreamExchangeRate.Binance
 {
     class BinanceClient : Provider

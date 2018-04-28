@@ -2,7 +2,6 @@
 using StreamExchangeRate.Binance;
 using System.Threading;
 using System.Collections.Generic;
-
 namespace StreamExchangeRate
 {
     class Program

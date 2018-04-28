@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-
 namespace StreamExchangeRate.Binance
 {
     public class BinanceStreamTick
