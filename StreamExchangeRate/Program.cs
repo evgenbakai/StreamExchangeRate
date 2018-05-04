@@ -2,10 +2,13 @@
 using StreamExchangeRate.Binance;
 using System.Threading;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace StreamExchangeRate
 {
     class Program
     {
+        //public static async Task Main(string[] args)
         static void Main(string[] args)
         {
 /*
@@ -37,7 +40,7 @@ namespace StreamExchangeRate
             {
   
                 binance = new BinanceClient("Binance");
-                binance.ConnectAsync();   // Start
+                binance.ConnectAsync().Wait();
             }
             catch (Exception ex)
             {
@@ -45,8 +48,13 @@ namespace StreamExchangeRate
             }
 
             // test
+            Thread.Sleep(1000);
+            binance.Disconnect().Wait();
+
+            Console.WriteLine("-----------");
             Thread.Sleep(5000);
-            binance.DisconnectAsync();    // Stop
+            binance.ConnectAsync().Wait();
+
 
             Console.ReadKey(true);
         }

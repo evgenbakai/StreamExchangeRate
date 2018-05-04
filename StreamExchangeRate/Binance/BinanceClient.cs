@@ -29,11 +29,11 @@ namespace StreamExchangeRate.Binance
 
         protected override string NameProvider { get; set; } = "Binance";
 
-        protected override void OnMessage(object sender, MessageEventArgs e)
+        protected override void OnMessage(string data)
         {
             // get socket data
-            BinanceStreamTick eventData = JsonConvert.DeserializeObject<BinanceStreamTick>(e.Data);
-            MyTicker ticker = new MyTicker()
+            BinanceStreamTick eventData = JsonConvert.DeserializeObject<BinanceStreamTick>(data);
+            BaseTicker ticker = new BaseTicker()
             {
                 Symbol = eventData.Data.Symbol,
                 AskPrice = eventData.Data.BestAskPrice,
@@ -41,7 +41,7 @@ namespace StreamExchangeRate.Binance
                 TotalTradedVolume = eventData.Data.TotalTradedQuoteAssetVolume
             };
             // check the data has changed
-            if (MyEqualsTicker(ticker))
+            if (!EqualsTicker(ticker))
                 Console.WriteLine($"{ticker.Symbol} : Ask = {ticker.AskPrice}  Bid = {ticker.BidPrice} Volume = {ticker.TotalTradedVolume}");
             else
                 Console.WriteLine($"{ticker.Symbol}: data not changed");

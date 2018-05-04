@@ -1,7 +1,7 @@
 ﻿using System;
 namespace StreamExchangeRate
 {
-    class MyTicker
+    class BaseTicker
     {
         public string Symbol { get; set; }
         public decimal AskPrice { get; set; }
@@ -13,8 +13,8 @@ namespace StreamExchangeRate
             if (obj == null || GetType() != obj.GetType())
                 return false;
 
-            MyTicker t = (MyTicker)obj;
-            return (AskPrice == t.AskPrice) && (BidPrice == t.BidPrice) && (TotalTradedVolume == t.TotalTradedVolume);
+            BaseTicker ticker = (BaseTicker)obj;
+            return (AskPrice == ticker.AskPrice) && (BidPrice == ticker.BidPrice) && (TotalTradedVolume == ticker.TotalTradedVolume);
         }
         public override int GetHashCode()
         {

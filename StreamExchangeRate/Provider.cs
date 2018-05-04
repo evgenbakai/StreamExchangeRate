@@ -1,122 +1,171 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WebSocketSharp;
+
 namespace StreamExchangeRate
 {
     abstract class Provider
     {
         protected string baseWebsocketUri;         // wss://stream.binance.com:9443
         protected Uri serverUri;                   // wss://stream.binance.com:9443/stream?streams=symbol@ticker/symbol@ticker
-        protected List<MyTicker> listMyTicker;     // list with data for everyone symbol
+        protected List<BaseTicker> listTicker;     // list with data for everyone symbol
         protected string[] symbol;                 // array symbols
-        protected WebSocket socket;                // object WebSocket
-        private int retry;                         // counter 
+        // ------------------------------------------------------------
+        protected ClientWebSocket webSocket;
+        protected CancellationTokenSource cancellationTokenSource;
+        protected CancellationToken cancellationToken;
+        protected const int ReceiveChunkSize = 1024;
+        protected bool flagStartStop;
 
-        abstract protected void OnMessage(object sender, MessageEventArgs e);
+        abstract protected void OnMessage(string data);
+
         abstract protected string NameProvider { get; set; }
 
         public Provider(string key, string baseWebsocketUri)
         {
             this.baseWebsocketUri = baseWebsocketUri;
-            listMyTicker = new List<MyTicker>();
+            this.listTicker = new List<BaseTicker>();
         }
+
         ~Provider()
         {
-            if (socket != null)
+            Dispose();
+        }
+
+        public async Task ConnectAsync()
+        {
+            this.webSocket = new ClientWebSocket();
+            this.cancellationTokenSource = new CancellationTokenSource();
+            this.cancellationToken = cancellationTokenSource.Token;
+            try
             {
-                socket.CloseAsync();
-                socket = null;
+                await webSocket.ConnectAsync(serverUri, cancellationToken);
+                if (webSocket.State == WebSocketState.Open)
+                {
+                    Console.WriteLine($"{NameProvider} WebSocket Open");
+                    Console.WriteLine($"{NameProvider} subscribed to {symbol.Length} pairs: {string.Join(" ", symbol).ToUpper()} \n");
+                    flagStartStop = true;
+                    StartListen();
+                }
+                else
+                {
+                    Console.WriteLine($"{NameProvider} Error in opening WebSocket");
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"{NameProvider} Error in opening WebSocket: " + ex.Message);
+            }
+
+        }
+
+        public void Dispose()
+        {
+            if (webSocket != null)
+            {
+                cancellationTokenSource.Cancel();
+                webSocket.Dispose();
+                webSocket = null;
             }
         }
 
-        public void ConnectAsync()
+        public async Task Disconnect()
         {
-            socket = new WebSocket(serverUri.AbsoluteUri);
-            socket.OnOpen += OnOpen;
-            socket.OnMessage += OnMessage;
-            socket.OnError += OnError;
-            socket.OnClose += OnClose;
-            socket.ConnectAsync();
-        }
-
-        public void DisconnectAsync()
-        {
-            if (socket != null)
+            try
             {
-                socket.CloseAsync();
-                socket = null;
+                if (webSocket != null)
+                {
+                    if (webSocket.State != WebSocketState.Closed)
+                    {
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "DELETE", CancellationToken.None);
+                    }
+                    webSocket.Dispose();
+                    Console.WriteLine($"\n{NameProvider} WebSocket Close.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Disconnect error: " + ex);
+            }
+            finally
+            {
+                webSocket = null;
             }
         }
 
-        protected void OnOpen(object sender, EventArgs e)
+
+        private async void StartListen()
         {
-            Console.WriteLine($"{NameProvider} WebSocket Open");
-            Console.WriteLine($"{NameProvider} subscribed to {symbol.Length} pairs: {string.Join(" ", symbol).ToUpper()} \n");
+            var buffer = new byte[ReceiveChunkSize];
+            try
+            {
+                while (webSocket.State == WebSocketState.Open && flagStartStop)
+                {
+                    string strResult = string.Empty;
+                    WebSocketReceiveResult result = null;
+                    do
+                    {
+                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+
+                        if (result.MessageType == WebSocketMessageType.Text)
+                        {
+                            strResult = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        }
+                        else if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                        }
+                    } while (!result.EndOfMessage);
+                    OnMessage(strResult);
+                }
+            }
+            catch (Exception)
+            {
+                //Reconnect();
+            }
         }
 
-        protected void OnClose(object sender, CloseEventArgs e)
+        private void Reconnect()
         {
-            Console.WriteLine($"\n{NameProvider} WebSocket Close. " + e.Reason + " --- " + e.Code);
-
-            if (e.WasClean && e.Code != (ushort)CloseStatusCode.Abnormal)
-                return;
-
-            if (retry < 5)
+            Timer timer = null;
+            TimerCallback timerCallback = new TimerCallback(async delegate
             {
-                Console.WriteLine($"{NameProvider}: Reconnect...");
-                retry++;
-                Thread.Sleep(5000);
-                socket.ConnectAsync();
+                if(webSocket.State != WebSocketState.Open)
+                {
+                    Console.WriteLine($"{NameProvider}: Reconnect...");
+                    webSocket.Dispose();
+                    await ConnectAsync();
+                }
+                else
+                {
+                    //timer.Dispose();
+                }
+
+            });
+            timer = new Timer(timerCallback, null, 0, 1000);
+        }
+
+        protected bool EqualsTicker(BaseTicker ticker)
+        {
+            // return true -  в списку listTicker знайдено обєкт який рівний обєкту  ticker
+            // return false - в списку listTicker не знайдено обєкта по необхідному символу (ticker.Symbol), або
+            //                відповідний обєкт з listTicker не рівнмй обєкту ticker
+            bool returnValue;
+            int indexFoundTicker = listTicker.FindIndex((t) => t.Symbol == ticker.Symbol);
+            if (indexFoundTicker != -1)
+            {
+                returnValue = listTicker[indexFoundTicker].Equals(ticker);
+                listTicker[indexFoundTicker] = ticker;
+                return returnValue;   
             }
             else
             {
-                Console.WriteLine($"{NameProvider}: The reconnecting has failed.");
+                listTicker.Add(ticker);
+                return false;
             }
         }
-
-        protected void OnError(object sender, ErrorEventArgs e)
-        {
-            Console.WriteLine($"{NameProvider} WebSocket Error Message:" + e.Message);
-        }
-
-        protected bool MyEqualsTicker(MyTicker ticker)
-        {
-            bool flag = false;
-            for (int i = 0; i < listMyTicker.Count; i++)
-            {
-                if (listMyTicker[i].Symbol == ticker.Symbol)
-                {
-                    flag = true;
-                    if (listMyTicker[i].Equals(ticker))
-                    {
-                        return false;
-                    }
-                }
-            }
-            if (!flag)
-                listMyTicker.Add(ticker);
-            return true;
-        }
-        
-        //private Task IsAlive()
-        //{
-        //    while (true)
-        //    {
-        //        if (socket != null && socket.IsAlive)
-        //        {
-        //            Console.WriteLine("connected");
-        //        }
-        //        else
-        //        {
-        //            Console.WriteLine("not connected");
-        //        }
-        //    }
-        //}
-        //public async void Alive()
-        //{
-        //    await IsAlive();
-        //}
     }
 }
