@@ -68,6 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class1.cs" />
     <Compile Include="Provider.cs" />
     <Compile Include="Binance\BinanceClient.cs" />
     <Compile Include="Binance\BinanceStreamTick.cs" />

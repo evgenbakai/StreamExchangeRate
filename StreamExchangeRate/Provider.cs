@@ -16,9 +16,9 @@ namespace StreamExchangeRate
         // ------------------------------------------------------------
         protected ClientWebSocket webSocket;
         protected CancellationTokenSource cancellationTokenSource;
-        protected CancellationToken cancellationToken;
         protected const int ReceiveChunkSize = 1024;
-        protected bool flagStartStop;
+        public bool IsConnected;
+        Timer timerIsPing;
 
         abstract protected void OnMessage(string data);
 
@@ -30,24 +30,25 @@ namespace StreamExchangeRate
             this.listTicker = new List<BaseTicker>();
         }
 
-        ~Provider()
+        public async Task /*void*/ ConnectAsync()
         {
-            Dispose();
-        }
+            if (webSocket != null)
+            {
+                Console.WriteLine($"\n{NameProvider} Reconnect...");
+                Disconnect();
+            }
+            webSocket = new ClientWebSocket();
+            cancellationTokenSource = new CancellationTokenSource();
 
-        public async Task ConnectAsync()
-        {
-            this.webSocket = new ClientWebSocket();
-            this.cancellationTokenSource = new CancellationTokenSource();
-            this.cancellationToken = cancellationTokenSource.Token;
             try
             {
-                await webSocket.ConnectAsync(serverUri, cancellationToken);
+                await webSocket.ConnectAsync(serverUri, cancellationTokenSource.Token);
                 if (webSocket.State == WebSocketState.Open)
                 {
+                    IsConnected = true;
+                    _pinger();
                     Console.WriteLine($"{NameProvider} WebSocket Open");
                     Console.WriteLine($"{NameProvider} subscribed to {symbol.Length} pairs: {string.Join(" ", symbol).ToUpper()} \n");
-                    flagStartStop = true;
                     StartListen();
                 }
                 else
@@ -59,31 +60,25 @@ namespace StreamExchangeRate
             {
                 Console.WriteLine($"{NameProvider} Error in opening WebSocket: " + ex.Message);
             }
-
         }
 
-        public void Dispose()
-        {
-            if (webSocket != null)
-            {
-                cancellationTokenSource.Cancel();
-                webSocket.Dispose();
-                webSocket = null;
-            }
-        }
-
-        public async Task Disconnect()
+        public void Disconnect()
         {
             try
             {
+                if (cancellationTokenSource != null)
+                {
+                    cancellationTokenSource.Cancel();
+                }
                 if (webSocket != null)
                 {
-                    if (webSocket.State != WebSocketState.Closed)
-                    {
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "DELETE", CancellationToken.None);
-                    }
+                    webSocket.Abort();
                     webSocket.Dispose();
                     Console.WriteLine($"\n{NameProvider} WebSocket Close.");
+                }
+                if (timerIsPing != null)
+                {
+                    timerIsPing.Dispose();
                 }
             }
             catch (Exception ex)
@@ -93,22 +88,24 @@ namespace StreamExchangeRate
             finally
             {
                 webSocket = null;
+                cancellationTokenSource = null;
+                timerIsPing = null;
+                IsConnected = false;
             }
         }
-
 
         private async void StartListen()
         {
             var buffer = new byte[ReceiveChunkSize];
             try
             {
-                while (webSocket.State == WebSocketState.Open && flagStartStop)
+                while (webSocket.State == WebSocketState.Open)
                 {
                     string strResult = string.Empty;
                     WebSocketReceiveResult result = null;
                     do
                     {
-                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
 
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
@@ -116,36 +113,42 @@ namespace StreamExchangeRate
                         }
                         else if (result.MessageType == WebSocketMessageType.Close)
                         {
-                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationTokenSource.Token);
                         }
                     } while (!result.EndOfMessage);
                     OnMessage(strResult);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //Reconnect();
+                //Console.WriteLine($"{NameProvider} Error in ReceiveAsync: {ex.Message}");
             }
         }
 
-        private void Reconnect()
+        public void Stop()
         {
-            Timer timer = null;
-            TimerCallback timerCallback = new TimerCallback(async delegate
+            if (cancellationTokenSource != null)
             {
-                if(webSocket.State != WebSocketState.Open)
-                {
-                    Console.WriteLine($"{NameProvider}: Reconnect...");
-                    webSocket.Dispose();
-                    await ConnectAsync();
-                }
-                else
-                {
-                    //timer.Dispose();
-                }
+                cancellationTokenSource.Cancel();
+                Console.WriteLine($"\n{NameProvider} WebSocket Stop.");
+            }
+        }
 
+        private void _pinger()
+        {
+            TimerCallback timerCallback = new TimerCallback(delegate
+            {
+                if (webSocket != null && webSocket.State != WebSocketState.Open && IsConnected)
+                {
+                    IsConnected = false;
+                }
+                //Console.WriteLine($"\nIsConnected = {IsConnected},  webSocket.State = {webSocket.State}\n");
             });
-            timer = new Timer(timerCallback, null, 0, 1000);
+            if (timerIsPing != null)
+                timerIsPing.Dispose();
+
+            timerIsPing = new Timer(timerCallback);
+            timerIsPing.Change(0, 2000);
         }
 
         protected bool EqualsTicker(BaseTicker ticker)

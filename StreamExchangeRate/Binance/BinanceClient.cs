@@ -26,7 +26,7 @@ namespace StreamExchangeRate.Binance
                 throw new Exception($"Error for key {key} \nex.Message: {ex.Message}");
             }
         }
-
+        
         protected override string NameProvider { get; set; } = "Binance";
 
         protected override void OnMessage(string data)
