@@ -39,7 +39,7 @@ namespace StreamExchangeRate
             }
             webSocket = new ClientWebSocket();
             cancellationTokenSource = new CancellationTokenSource();
-
+            webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5);
             try
             {
                 await webSocket.ConnectAsync(serverUri, cancellationTokenSource.Token);
@@ -106,7 +106,6 @@ namespace StreamExchangeRate
                     do
                     {
                         result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
-
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
                             strResult = Encoding.UTF8.GetString(buffer, 0, result.Count);
@@ -121,6 +120,7 @@ namespace StreamExchangeRate
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 //Console.WriteLine($"{NameProvider} Error in ReceiveAsync: {ex.Message}");
             }
         }
@@ -139,6 +139,10 @@ namespace StreamExchangeRate
             TimerCallback timerCallback = new TimerCallback(delegate
             {
                 if (webSocket != null && webSocket.State != WebSocketState.Open && IsConnected)
+                {
+                    IsConnected = false;
+                }
+                else if (webSocket == null && IsConnected)
                 {
                     IsConnected = false;
                 }

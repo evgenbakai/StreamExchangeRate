@@ -48,13 +48,13 @@ namespace StreamExchangeRate
             }
 
             // test
-            Thread.Sleep(1000);
-            binance.Stop();
+            //Thread.Sleep(1000);
+            //binance.Disconnect();
 
-            Console.WriteLine("----------------------------------");
+            //Console.WriteLine("----------------------------------");
 
-            Thread.Sleep(5000);
-            binance.ConnectAsync().Wait();
+            //Thread.Sleep(5000);
+            //binance.ConnectAsync().Wait();
 
             Console.ReadKey(true);
         }
