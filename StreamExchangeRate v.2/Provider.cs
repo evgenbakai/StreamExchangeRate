@@ -59,13 +59,16 @@ namespace StreamExchangeRate_v._2
             try
             {
                 await _client.ConnectAsync(uri, token);
+                if (_client.State == WebSocketState.Open)
+                    Console.WriteLine($"{provider.NameProvider} subscribed to {provider.Symbol.Length} pairs: {string.Join(" ", provider.Symbol).ToUpper()} \n");
 #pragma warning disable 4014
-                Listen(_client, token);
+                /*await*/ Listen(_client, token);
 #pragma warning restore 4014
+
             }
             catch (Exception e)
             {
-                Console.WriteLine(L("Exception while connecting"));
+                Console.WriteLine(L($"Exception while connecting: {e.Message}"));
                 await Reconnect();
             }
         }
@@ -102,10 +105,8 @@ namespace StreamExchangeRate_v._2
                 } while (!result.EndOfMessage);
 
                 var received = resultMessage.ToString();
-                //Console.WriteLine(L($"Received:  {received}"));
                 _lastReceivedMsg = DateTime.UtcNow;
                 provider.OnMessage(received);
-
             } while (client.State == WebSocketState.Open && !token.IsCancellationRequested);
         }
 

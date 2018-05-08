@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace StreamExchangeRate_v._2
@@ -11,10 +12,20 @@ namespace StreamExchangeRate_v._2
     {
         static void Main(string[] args)
         {
-            Provider ws = new Provider(new BinanceClient("Binance"));
-            ws.Start();
+            Provider p = new Provider(new BinanceClient("Binance"));
+            p.Start();
 
-
+            /*
+            List<Provider> list_providers = new List<Provider>();
+            for (int i = 0; i < 1000; i++)
+            {
+                list_providers.Add(new Provider(new BinanceClient("Binance")));
+            }
+            foreach (Provider p in list_providers)
+            {
+                p.Start();
+            }
+            */
             Console.ReadKey(true);
         }
     }
