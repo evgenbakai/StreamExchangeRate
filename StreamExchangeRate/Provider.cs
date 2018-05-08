@@ -39,7 +39,7 @@ namespace StreamExchangeRate
             }
             webSocket = new ClientWebSocket();
             cancellationTokenSource = new CancellationTokenSource();
-            webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+            webSocket.Options.KeepAliveInterval = new TimeSpan(0, 0, 0, 10);
             try
             {
                 await webSocket.ConnectAsync(serverUri, cancellationTokenSource.Token);

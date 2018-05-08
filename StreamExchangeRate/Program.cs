@@ -26,7 +26,7 @@ namespace StreamExchangeRate
             {
                 p.ConnectAsync();
             }
-            
+
             // task in main thread
             for (int i = 0; i < 1000; i++)
             {
@@ -34,11 +34,11 @@ namespace StreamExchangeRate
                 Thread.Sleep(1000);
             }
 */
-
+            
             BinanceClient binance = null;
             try
             {
-  
+
                 binance = new BinanceClient("Binance");
                 binance.ConnectAsync().Wait();
             }
@@ -55,7 +55,7 @@ namespace StreamExchangeRate
 
             //Thread.Sleep(5000);
             //binance.ConnectAsync().Wait();
-
+            
             Console.ReadKey(true);
         }
     }

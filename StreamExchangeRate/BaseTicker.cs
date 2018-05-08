@@ -1,7 +1,7 @@
 ﻿using System;
 namespace StreamExchangeRate
 {
-    class BaseTicker
+    public class BaseTicker
     {
         public string Symbol { get; set; }
         public decimal AskPrice { get; set; }
