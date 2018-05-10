@@ -8,7 +8,7 @@ namespace StreamExchangeRate_v._2
 {
     public abstract class AProvider
     {
-        TotalTicker totalTicker;
+        private TotalTicker totalTicker;
 
         public AProvider(string fileConfigJson = "mappings.json")
         {
