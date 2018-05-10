@@ -1,0 +1,30 @@
+{
+  "config": [
+    {
+      "RateID": "BTC/USDT",
+      "provider": [
+        {
+          "ProviderID": "Binance",
+          "SymbolApi": "btcusdt"
+        },
+        {
+          "ProviderID": "Okex",
+          "SymbolApi": "btc_usdt"
+        }
+      ]
+    },
+    {
+      "RateID": "IOTA/BTC",
+      "provider": [
+        {
+          "ProviderID": "Binance",
+          "SymbolApi": "iotabtc"
+        },
+        {
+          "ProviderID": "Okex",
+          "SymbolApi": "iota_btc"
+        }
+      ]
+    }
+  ]
+}
