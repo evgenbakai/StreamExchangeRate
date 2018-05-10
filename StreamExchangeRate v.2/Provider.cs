@@ -25,7 +25,7 @@ namespace StreamExchangeRate_v._2
             }
 
             this.provider = provider;
-            _url = provider.getUri();
+            _url = provider.GetUri();
             int minute = 1000 * 60;
             _lastChanceTimer = new Timer(async x => await LastChance(x), null, minute, minute);
         }
@@ -60,7 +60,7 @@ namespace StreamExchangeRate_v._2
             {
                 await _client.ConnectAsync(uri, token);
                 if (_client.State == WebSocketState.Open)
-                    Console.WriteLine($"{provider.NameProvider} subscribed to {provider.Symbol.Length} pairs: {string.Join(" ", provider.Symbol).ToUpper()} \n");
+                    Console.WriteLine($"{provider.ProviderName} subscribed to {provider.Symbol.Count} pairs: {string.Join(" ", provider.Symbol).ToUpper()} \n");
 #pragma warning disable 4014
                 /*await*/ Listen(_client, token);
 #pragma warning restore 4014
@@ -127,7 +127,7 @@ namespace StreamExchangeRate_v._2
 
         private string L(string msg)
         {
-            return $"[{provider.NameProvider} WEBSOCKET] {msg}";
+            return $"[{provider.ProviderName} WEBSOCKET] {msg}";
         }
     }
 }

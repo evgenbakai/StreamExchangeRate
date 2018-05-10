@@ -1,35 +1,29 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Configuration;
 
 namespace StreamExchangeRate_v._2.Binance
 {
     class BinanceClient : AProvider
     {
-        public BinanceClient(string key)
+        public BinanceClient(string providerId) : base()
         {
-            Key = key;
-            NameProvider = "Binance";
+            ProviderId = providerId;
+            ProviderName = "Binance";
         }
 
-        public override Uri getUri()
+        public override Uri GetUri()
         {
             Uri uri = null;
             try
             {
                 string streamName = string.Empty;
-                // array of symbols from the file App.config
-                Symbol = ConfigurationManager.AppSettings.Get(Key).Split((string[])null, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (string s in Symbol)
-                {
-                    streamName += $"{s.ToLower()}@ticker/";
-                }
-                uri = new Uri($"wss://stream.binance.com:9443/stream?streams={streamName}");
+                Symbol = _mappings[ProviderId].getListSymbol();
+                _mappings[ProviderId].getListSymbolApi().ForEach(s => streamName += $"{s}@ticker/");
+                uri = new Uri($"wss://stream.binance.com:9443/stream?streams={streamName.ToLower()}");
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error for key {Key} \nex.Message: {ex.Message}");
+                throw new Exception($"Error for ProviderId: {ProviderId} \nex.Message: {ex.Message}");
             }
             return uri;
         }
@@ -39,16 +33,16 @@ namespace StreamExchangeRate_v._2.Binance
             // get socket data
             BinanceStreamTick eventData = JsonConvert.DeserializeObject<BinanceStreamTick>(data);
             BaseTicker ticker = new BaseTicker();
-            ticker.Symbol = eventData.Data.Symbol;
+            ticker.Symbol = _mappings[ProviderId].getSymbol(eventData.Data.SymbolApi);
             ticker.AskPrice = eventData.Data.BestAskPrice;
             ticker.BidPrice = eventData.Data.BestBidPrice;
             ticker.TotalTradedVolume = eventData.Data.TotalTradedQuoteAssetVolume;
 
             // check the data has changed
-            if (!EqualsTicker(ticker))
-                Console.WriteLine($"{ticker.Symbol} : Ask = {ticker.AskPrice}  Bid = {ticker.BidPrice} Volume = {ticker.TotalTradedVolume}");
+            if (processTicker(ticker))
+                Console.WriteLine($"[{ProviderName}] {ticker.Symbol} : Ask = {ticker.AskPrice}  Bid = {ticker.BidPrice} Volume = {ticker.TotalTradedVolume}");
             else
-                Console.WriteLine($"{ticker.Symbol}: data not changed");
+                Console.WriteLine($"[{ProviderName}] {ticker.Symbol}: data not changed");
         }
     }
 }

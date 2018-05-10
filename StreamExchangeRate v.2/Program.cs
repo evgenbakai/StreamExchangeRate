@@ -12,7 +12,8 @@ namespace StreamExchangeRate_v._2
     {
         static void Main(string[] args)
         {
-            Provider p = new Provider(new BinanceClient("Binance"));
+
+            Provider p = new Provider(new BinanceClient("24"));
             p.Start();
 
             /*

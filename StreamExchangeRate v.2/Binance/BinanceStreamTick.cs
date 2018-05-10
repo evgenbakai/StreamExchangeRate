@@ -14,7 +14,7 @@ namespace StreamExchangeRate_v._2.Binance
     {
 
         [JsonProperty("s")]
-        public string Symbol { get; set; }
+        public string SymbolApi { get; set; }
 
         [JsonProperty("p")]
         public decimal PriceChange { get; set; }

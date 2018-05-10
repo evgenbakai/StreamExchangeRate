@@ -1,0 +1,65 @@
+[
+  {
+    "symbol": "BTC/USD",
+    "providers": [
+      {
+        "mappedTo": "BTCUSDT",
+        "providerId": 24 // binance
+      },
+      {
+        "mappedTo": "btc_usdt",
+        "providerId": 25 // okex
+      },
+      {
+        "mappedTo": "btc_usdt",
+        "providerId": 27 // cryptopia
+      },
+      {
+        "mappedTo": "btc_usd",
+        "providerId": 31 // bitflyer
+      }
+    ]
+  }, // BTC/USD
+  {
+    "symbol": "IOTA/BTC",
+    "providers": [
+      {
+        "mappedTo": "IOTABTC",
+        "providerId": 24 // binance
+      },
+      {
+        "mappedTo": "iota_btc",
+        "providerId": 25 // okex
+      },
+      {
+        "mappedTo": "iota_btc",
+        "providerId": 27 // cryptopia
+      },
+      {
+        "mappedTo": "iota_btc",
+        "providerId": 31 // bitflyer
+      }
+    ]
+  }, // IOTA/BTC
+  {
+    "symbol": "ETH/USDT",
+    "providers": [
+      {
+        "mappedTo": "ETHUSDT",
+        "providerId": 24 // binance
+      },
+      {
+        "mappedTo": "eth_usd",
+        "providerId": 25 // okex
+      },
+      {
+        "mappedTo": "eth_usd",
+        "providerId": 27 // cryptopia
+      },
+      {
+        "mappedTo": "eth_usd",
+        "providerId": 31 // bitflyer
+      }
+    ]
+  }  // ETH/USDT
+]

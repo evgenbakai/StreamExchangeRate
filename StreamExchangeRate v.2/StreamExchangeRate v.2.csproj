@@ -49,15 +49,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AProvider.cs" />
-    <Compile Include="BaseTicker.cs" />
+    <Compile Include="Config\ConfigurationManager.cs" />
+    <Compile Include="Config\ObjJsonConfig.cs" />
+    <Compile Include="Config\ProviderConfig.cs" />
+    <Compile Include="Config\SymbolConfig.cs" />
+    <Compile Include="ModelTicker\BaseTicker.cs" />
     <Compile Include="Binance\BinanceClient.cs" />
     <Compile Include="Binance\BinanceStreamTick.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Provider.cs" />
+    <Compile Include="ModelTicker\TotalTicker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="mappings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
